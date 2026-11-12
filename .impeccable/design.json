@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "name": "Kin Arc archival map-room",
+  "mode": "operate",
+  "seed": "seed:35498b049d90ece5",
+  "tokens": {
+    "paper": "#f3efe4",
+    "paperRaised": "#fbf9f3",
+    "ink": "#202923",
+    "muted": "#535e57",
+    "line": "#d7d1c2",
+    "action": "#173d33",
+    "focus": "#b65338"
+  },
+  "type": {"display": "Newsreader", "interface": "DM Sans"},
+  "radii": {"control": 9, "surface": 14}
+}

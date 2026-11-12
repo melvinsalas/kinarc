@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3efe4">
+  <meta name="description" content="A private, browser-based GEDCOM ancestor fan chart viewer.">
+  <title>Kin Arc — Private genealogy fan chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#chart">Skip to chart</a>
+  <header class="topbar">
+    <div class="brand"><svg class="fan-mark brand-mark" viewBox="0 0 64 36" aria-hidden="true"><path d="M3 33A29 29 0 0 1 61 33M13 33a19 19 0 0 1 38 0M23 33a9 9 0 0 1 18 0M32 4v29M8 16l24 17 24-17"/></svg><span>Kin Arc</span></div>
+    <p class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0110 0v3M6 10h12v10H6z"/></svg>Private by design · your family file stays on this device</p>
+    <div class="header-actions">
+      <button class="button ghost" id="sampleBtn">Reset sample</button>
+      <label class="button primary" for="fileInput"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5l5 5M5 15v5h14v-5"/></svg>Import GEDCOM</label>
+      <input id="fileInput" type="file" accept=".ged,text/plain" hidden>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar" aria-label="Chart controls">
+      <section>
+        <h1>Ancestor fan</h1>
+        <p class="lede">Trace a lineage outward. Every open space preserves the place of an unknown ancestor.</p>
+      </section>
+      <section class="control-group">
+        <label for="rootSelect">Root person</label>
+        <div class="person-search">
+          <input id="rootSelect" type="search" autocomplete="off" placeholder="Search by name…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="rootResults">
+          <div id="rootResults" class="person-results" role="listbox" hidden></div>
+        </div>
+        <button class="back-root" id="backRoot" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M4 12h9a7 7 0 017 7"/></svg>
+          <span>Back to descendant</span>
+        </button>
+      </section>
+      <section class="control-group">
+        <div class="range-head"><label for="genRange">Visible generations</label><output id="genOutput">6</output></div>
+        <input id="genRange" type="range" min="2" max="11" value="6" aria-describedby="genWarning">
+        <div class="range-scale"><span>2</span><span id="genMax">11</span></div>
+        <p id="genWarning" class="generation-warning" role="status" hidden>Large charts may respond more slowly. 11 generations is the safe limit.</p>
+      </section>
+      <section class="legend-section">
+        <div class="section-head"><h2>Birth countries</h2><button class="text-button" id="editColors">Edit colors</button></div>
+        <div id="legend" class="legend"></div>
+      </section>
+      <section class="help-block">
+        <h2>Explore the chart</h2>
+        <p>Scroll to zoom · drag to pan · select a segment for details · double-click to make someone the root.</p>
+      </section>
+      <div class="export-row">
+        <button class="button secondary" id="exportSvg">Export SVG</button>
+        <button class="button secondary" id="exportPng">Export PNG</button>
+      </div>
+    </aside>
+
+    <section class="workspace" aria-label="Fan chart workspace">
+      <div class="workspace-bar">
+        <div><strong id="datasetName">The Alvarez–Martin family</strong><span id="datasetStats">Sample data · 31 people</span></div>
+        <div class="zoom-actions" aria-label="Zoom controls">
+          <button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomReset">Fit</button><button id="zoomIn" aria-label="Zoom in">+</button>
+        </div>
+      </div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div id="emptyChart" class="empty-chart" hidden>
+        <svg class="fan-mark empty-arc" viewBox="0 0 64 36" aria-hidden="true"><path d="M3 33A29 29 0 0 1 61 33M13 33a19 19 0 0 1 38 0M23 33a9 9 0 0 1 18 0M32 4v29M8 16l24 17 24-17"/></svg>
+        <h2>Choose a root person</h2>
+        <p>Use the person search on the left to begin the fan chart.</p>
+      </div>
+      <div id="chart" class="chart-wrap" tabindex="0" aria-label="Interactive ancestor fan chart"></div>
+      <div class="chart-caption"><span><i class="known"></i>Recorded ancestor</span><span><i class="missing"></i>Unknown ancestor</span></div>
+    </section>
+
+    <aside id="details" class="details" aria-label="Selected ancestor details">
+      <button class="details-close" id="detailsClose" aria-label="Close details">×</button>
+      <div class="detail-color" id="detailColor"></div>
+      <h2 id="detailName">Isabella Alvarez</h2>
+      <p class="detail-relation" id="detailRelation">Root person</p>
+      <dl>
+        <div><dt>Born</dt><dd id="detailBorn">1988</dd></div>
+        <div><dt>Birthplace</dt><dd id="detailPlace">San José, Costa Rica</dd></div>
+        <div><dt>Country match</dt><dd id="detailMatch">Explicit country name</dd></div>
+      </dl>
+      <section class="origin-section" aria-labelledby="originTitle">
+        <div class="origin-heading"><h3 id="originTitle">Estimated origin</h3><button id="originInfo" type="button" aria-label="How estimated origin is calculated">?</button></div>
+        <div id="originBreakdown" class="origin-breakdown"></div>
+        <p id="originNote" class="origin-note">Based on recorded ancestor birth countries. Missing branches are ignored.</p>
+      </section>
+      <button class="button primary wide" id="setRoot">Make root person</button>
+    </aside>
+  </main>
+
+  <dialog id="colorDialog">
+    <form method="dialog">
+      <div class="dialog-head"><div><h2>Country colors</h2><p>Colors are saved in this browser.</p></div><button value="cancel" aria-label="Close">×</button></div>
+      <div id="colorEditor" class="color-editor"></div>
+      <div class="dialog-actions"><button class="button ghost" id="resetColors" type="button">Restore defaults</button><button class="button primary" value="save">Done</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
